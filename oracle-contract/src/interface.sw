@@ -1,3 +1,5 @@
+library interface;
+
 // abi declaration
 
 abi Oracle {
@@ -20,7 +22,7 @@ abi Oracle {
 
     // check if latest price of asset has crossed order limit, withdraw funds if yes.
     #[storage(read)]
-    fn order_limit(limit: u64, asset_id: ContractID);
+    fn order_limit(limit: u64, price: u64);
 
     // transfer funds of amount 'amount' back to owner
     #[storage(read, write)]
@@ -28,6 +30,6 @@ abi Oracle {
 
     // check remaining balance of funds
     #[storage(read)]
-    fn remaining_balance(asset_id: ContractID);
+    fn remaining_balance(asset_id: ContractID) -> u64;
     
 }

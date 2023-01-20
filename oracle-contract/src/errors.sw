@@ -1,5 +1,10 @@
 library errors;
 
+// user not authorised error
+pub enum AccessDenied{
+    UnauthorisedUser: (),
+}
+
 // init error
 pub enum InitError{
     CannotReinitialise: (),
@@ -9,5 +14,5 @@ pub enum InitError{
 
 // transaction failed error
 pub enum TransactionFailed{
-    InsufficientFunds: u64;
+    InsufficientFunds: u64,
 }

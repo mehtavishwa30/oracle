@@ -4,7 +4,7 @@ entry = "main.sw"
 license = "Apache-2.0"
 name = "oracle-contract"
 
-[contants]
-address_zero: { type = "b256", value = "0x0000000000000000000000000000000000000000000000000000000000000000" } 
+[constants]
+address_zero = { type = "b256", value = "0x0000000000000000000000000000000000000000000000000000000000000000" } 
 
 [dependencies]

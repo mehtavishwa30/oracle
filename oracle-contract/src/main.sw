@@ -6,6 +6,20 @@ dep events;
 dep interface;
 
 use data_structures::Price;
+
+use errors::{
+    AccessDenied,
+    InitError,
+    TransactionFailed,
+    };
+
+use events::{
+    PriceUpdatedEvent,
+    WithdrawEvent,
+    };
+
+use interface::Oracle;
+
 use std::{
     auth::{
         AuthError,
@@ -17,13 +31,13 @@ use std::{
     revert::require,
     logging::log,
     token::transfer,
-}
+};
 
 storage{
-    prices: StorageMap<ContractID, Price> = StorageMap{},
+    prices: StorageMap<ContractID, Price> = StorageMap {},
     owner: Address = Address::from(address_zero),
-    balance: StorageMap<(Identity, ContractID), u64> StorageMap{},
-    limit: u64;
+    balance: StorageMap<(Identity, ContractID), u64> = StorageMap {},
+    limit: u64 = 0,
 }
 
 // abi implementation
@@ -33,24 +47,32 @@ impl Oracle for Contract {
     // retrieve the owner of the asset
     #[storage(read)]
     fn owner() -> Identity{
-        Identity::Address(storage.owner)
+        Identity::Address(storage.owner);
     }
 
     // initialise owner
     #[storage(read, write)]
-    fn initialise(owner: Address){
-        owner = storage.owner;
+    fn initialise_owner(owner: Address){
+        require(storage.owner.into() == address_zero, InitError::CannotReinitialise);
+        storage.owner = owner;
     }
 
     // update the new price of the asset in storage
     #[storage(read, write)]
     fn set_asset_price(asset_id: ContractID, price: u64){
+
+        require(msg_sender().unwrap() == Identity::Address(storage.owner), AccessDenied::UnauthorisedUser());
+
         storage.prices.insert(asset_id, Price{ asset_id, price , last_updated: timestamp(), });
+
+        log(PriceUpdatedEvent{
+            price,
+        });
     }
 
     // retrieve latest asset price
     #[storage(read)]
-    fn get_asset_price(asset_id: ContractID) -> Price { storage.prices.get(asset_id) };
+    fn get_asset_price(asset_id: ContractID) -> Price { storage.prices.get(asset_id) }
 
     // check if latest price of asset has crossed order limit, withdraw funds if yes.
     #[storage(read)]
@@ -72,7 +94,7 @@ impl Oracle for Contract {
         let current_balance = storage.balance.get(sender, asset_id);
 
         // throw transaction error if owner has insufficient funds for the withdrawal amount
-        require(current_balance <= withdrawal_amount, TransactionFailed::InsufficientBalance(withdrawal_amount));
+        require(current_balance <= withdrawal_amount, TransactionFailed::InsufficientFunds(withdrawal_amount));
 
         // update the remaining balance after funds are withdrawn
         let remaining_balance = current_balance - withdrawal_amount;
@@ -80,9 +102,9 @@ impl Oracle for Contract {
         transfer(withdrawal_amount, asset_id, sender);
 
         log(WithdrawEvent{
-            asset_id;
-            withdrawal_amount;
-            balance: remaining_balance;
+            asset_id,
+            withdrawal_amount,
+            balance: remaining_balance,
         });
     }
 
