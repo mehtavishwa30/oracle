@@ -1,6 +1,7 @@
 library data_structures;
 
 pub struct Price{
-    id: ContractID,
+    asset_id: ContractID,
     price: u64,
+    last_updated: u64,
 }
