@@ -1,2 +1,2 @@
 # oracle
-A Sway smart contract for price oracles
+A smart contract written in Sway to provide asset prices to blockchain applications.
